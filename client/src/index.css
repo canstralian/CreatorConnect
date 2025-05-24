@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 28.2%; /* #484848 */
+  --muted: 0 0% 97%; /* #F7F7F7 */
+  --muted-foreground: 0 0% 46.3%; /* #767676 */
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 28.2%; /* #484848 */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 28.2%; /* #484848 */
+  --border: 0 0% 90%; /* #E6E6E6 */
+  --input: 0 0% 90%; /* #E6E6E6 */
+  --primary: 347 100% 61%; /* #FF385C */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 174 100% 33%; /* #00A699 */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 0% 46.3%; /* #767676 */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 347 100% 61%; /* #FF385C */
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 0 0% 10%;
+  --foreground: 0 0% 90%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 70%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 90%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 90%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --primary: 347 100% 61%; /* Keep the same primary color */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 174 100% 33%; /* Keep the same secondary color */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 0% 65%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 90%;
+  --ring: 347 100% 61%; /* Keep the same ring color */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-muted text-foreground;
+  }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
