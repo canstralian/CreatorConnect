@@ -23,7 +23,7 @@ export default function TopNavigation() {
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link href="/">
-                <a
+                <div
                   className={`${
                     location === "/" 
                       ? "border-b-2 border-primary text-foreground" 
@@ -31,10 +31,10 @@ export default function TopNavigation() {
                   } px-1 pt-1 font-medium text-sm`}
                 >
                   Home
-                </a>
+                </div>
               </Link>
               <Link href="/explore">
-                <a
+                <div
                   className={`${
                     location === "/explore" 
                       ? "border-b-2 border-primary text-foreground" 
@@ -42,10 +42,10 @@ export default function TopNavigation() {
                   } px-1 pt-1 font-medium text-sm`}
                 >
                   Explore
-                </a>
+                </div>
               </Link>
               <Link href="/messages">
-                <a
+                <div
                   className={`${
                     location.startsWith("/messages") 
                       ? "border-b-2 border-primary text-foreground" 
@@ -53,10 +53,10 @@ export default function TopNavigation() {
                   } px-1 pt-1 font-medium text-sm`}
                 >
                   Messages
-                </a>
+                </div>
               </Link>
               <Link href="/notifications">
-                <a
+                <div
                   className={`${
                     location === "/notifications" 
                       ? "border-b-2 border-primary text-foreground" 
@@ -64,7 +64,7 @@ export default function TopNavigation() {
                   } px-1 pt-1 font-medium text-sm`}
                 >
                   Notifications
-                </a>
+                </div>
               </Link>
             </div>
           </div>
