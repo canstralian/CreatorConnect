@@ -16,6 +16,7 @@ import {
   hashPassword,
   verifyPassword,
   generateToken,
+  verifyToken,
   authenticateToken,
   rateLimitLogin,
   recordLoginAttempt,
@@ -309,10 +310,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Like routes
-  app.post("/api/posts/:id/like", authenticated, async (req, res) => {
+  app.post("/api/posts/:id/like", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const postId = parseInt(req.params.id);
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       
       const post = await storage.getPost(postId);
       if (!post) {
@@ -343,10 +344,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Follow routes
-  app.post("/api/users/:id/follow", authenticated, async (req, res) => {
+  app.post("/api/users/:id/follow", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const followedId = parseInt(req.params.id);
-      const followerId = req.session.userId as number;
+      const followerId = req.userId as number;
       
       // Cannot follow yourself
       if (followerId === followedId) {
@@ -382,10 +383,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users/:id/subscribe", authenticated, async (req, res) => {
+  app.post("/api/users/:id/subscribe", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const creatorId = parseInt(req.params.id);
-      const subscriberId = req.session.userId as number;
+      const subscriberId = req.userId as number;
       
       // Cannot subscribe to yourself
       if (subscriberId === creatorId) {
@@ -431,9 +432,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Message routes
-  app.post("/api/messages", authenticated, async (req, res) => {
+  app.post("/api/messages", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const senderId = req.session.userId as number;
+      const senderId = req.userId as number;
       const messageData = insertMessageSchema.parse({
         ...req.body,
         senderId,
@@ -455,9 +456,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/messages", authenticated, async (req, res) => {
+  app.get("/api/messages", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       const messages = await storage.getMessagesByUser(userId);
       
       // Group messages by conversation partner
@@ -506,9 +507,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/messages/:userId", authenticated, async (req, res) => {
+  app.get("/api/messages/:userId", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const currentUserId = req.session.userId as number;
+      const currentUserId = req.userId as number;
       const partnerId = parseInt(req.params.userId);
       
       const partner = await storage.getUser(partnerId);
@@ -542,9 +543,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Story routes
-  app.post("/api/stories", authenticated, async (req, res) => {
+  app.post("/api/stories", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       const storyData = insertStorySchema.parse({
         ...req.body,
         userId,
@@ -560,9 +561,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stories", authenticated, async (req, res) => {
+  app.get("/api/stories", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       const stories = await storage.getFeedStories(userId);
       
       // Group stories by user
