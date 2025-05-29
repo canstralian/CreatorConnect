@@ -28,11 +28,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const getToken = () => localStorage.getItem('auth_token');
+  const setToken = (token: string) => localStorage.setItem('auth_token', token);
+  const removeToken = () => localStorage.removeItem('auth_token');
+
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
+      const token = getToken();
+      
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
       const response = await fetch("/api/auth/me", {
-        credentials: "include",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
       
       if (response.ok) {
@@ -40,9 +53,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(userData);
       } else {
         setUser(null);
+        removeToken(); // Remove invalid token
       }
     } catch (error) {
       setUser(null);
+      removeToken();
       console.error("Error checking authentication:", error);
     } finally {
       setIsLoading(false);
@@ -57,15 +72,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       const response = await apiRequest("POST", "/api/auth/login", { username, password });
-      const userData = await response.json();
-      setUser(userData);
+      const data = await response.json();
+      
+      // Store token and set user
+      setToken(data.token);
+      setUser(data.user);
       
       // Invalidate any cached queries that might depend on auth state
       queryClient.invalidateQueries();
       
       toast({
         title: "Welcome back!",
-        description: `You're now logged in as ${userData.displayName}`,
+        description: `You're now logged in as ${data.user.displayName}`,
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -84,15 +102,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       const response = await apiRequest("POST", "/api/auth/register", userData);
-      const newUser = await response.json();
-      setUser(newUser);
+      const data = await response.json();
+      
+      // Store token and set user
+      setToken(data.token);
+      setUser(data.user);
       
       // Invalidate any cached queries that might depend on auth state
       queryClient.invalidateQueries();
       
       toast({
         title: "Account created",
-        description: `Welcome to AdultConnect, ${newUser.displayName}!`,
+        description: `Welcome to AdultConnect, ${data.user.displayName}!`,
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -112,6 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await apiRequest("POST", "/api/auth/logout");
       setUser(null);
+      removeToken();
       
       // Invalidate any cached queries that might depend on auth state
       queryClient.invalidateQueries();

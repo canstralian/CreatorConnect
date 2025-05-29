@@ -7,6 +7,7 @@ import {
   messages, Message, InsertMessage,
   stories, Story, InsertStory
 } from "@shared/schema";
+import { hashPassword } from "./auth";
 
 export interface IStorage {
   // User operations
@@ -85,16 +86,16 @@ export class MemStorage implements IStorage {
     this.messageIdCounter = 1;
     this.storyIdCounter = 1;
     
-    // Seed some initial data
-    this.seedInitialData();
+    // Seed some initial data (async operation)
+    this.seedInitialData().catch(console.error);
   }
 
-  private seedInitialData() {
-    // Create some initial users
+  private async seedInitialData() {
+    // Create some initial users with hashed passwords
     const users = [
       {
         username: "jesslee",
-        password: "password123",
+        password: await hashPassword("password123"),
         displayName: "Jessica Lee",
         bio: "Professional photographer capturing moments of beauty and grace.",
         profileImage: "https://images.unsplash.com/photo-1589156280159-27698a70f29e?auto=format&fit=crop&w=200&h=200",
