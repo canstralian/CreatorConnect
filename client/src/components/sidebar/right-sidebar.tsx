@@ -44,7 +44,7 @@ export default function RightSidebar() {
                 <div className="flex justify-between items-center mt-1">
                   <p className="text-xs text-accent">{creator.subscribers} subscribers</p>
                   <Link href={`/profile/${creator.username}`}>
-                    <a className="text-xs text-primary font-medium hover:text-primary/80">View</a>
+                    <span className="text-xs text-primary font-medium hover:text-primary/80 cursor-pointer">View</span>
                   </Link>
                 </div>
               </div>
@@ -52,7 +52,7 @@ export default function RightSidebar() {
           ))}
           
           <Link href="/explore">
-            <a className="block text-center text-secondary text-sm font-medium mt-3 hover:underline">See All Popular Creators</a>
+            <div className="block text-center text-secondary text-sm font-medium mt-3 hover:underline cursor-pointer">See All Popular Creators</div>
           </Link>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function RightSidebar() {
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-foreground">Recent Messages</h3>
           <Link href="/messages">
-            <a className="text-secondary text-sm hover:underline">See All</a>
+            <span className="text-secondary text-sm hover:underline cursor-pointer">See All</span>
           </Link>
         </div>
         <div className="space-y-4">
@@ -95,7 +95,7 @@ export default function RightSidebar() {
             }
           ].map((message) => (
             <Link key={message.id} href={`/messages/${message.id}`}>
-              <a className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 cursor-pointer">
                 <div className="relative">
                   <img 
                     className="h-10 w-10 rounded-full object-cover" 
@@ -113,7 +113,7 @@ export default function RightSidebar() {
                   </div>
                   <p className="text-xs text-accent truncate w-48">{message.message}</p>
                 </div>
-              </a>
+              </div>
             </Link>
           ))}
         </div>

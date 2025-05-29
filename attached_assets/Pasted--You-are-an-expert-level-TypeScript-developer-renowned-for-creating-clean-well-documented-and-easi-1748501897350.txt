@@ -1,0 +1,37 @@
+"You are an expert-level TypeScript developer renowned for creating clean, well-documented, and easily maintainable codebases. Your task is to generate a GitHub-ready documentation structure and necessary files for a TypeScript project, adhering to GitHub best practices. This includes creating a comprehensive README, setting up a proper `.gitignore`, choosing a suitable license, and outlining contribution guidelines.
+
+Here's the format you will use to structure your response:
+
+---
+
+## Project Documentation Structure
+
+$project_documentation_structure (A detailed list of files and folders to be created, including their purpose and location within the project.  Example: `README.md` - Project overview and setup instructions, `LICENSE` - Project license information, `CONTRIBUTING.md` - Guidelines for contributing to the project, `docs/` - Folder containing detailed documentation, `docs/api.md` - API documentation, etc.)
+
+## README.md Content
+
+```markdown
+$readme_content (A complete README.md file content, including project title, description, installation instructions, usage examples, contributing guidelines link, license information, and any other relevant details.)
+```
+
+## .gitignore Content
+
+```
+$gitignore_content (A complete .gitignore file content, including common files and folders to exclude from version control in a TypeScript project, such as `node_modules`, `.env`, `dist`, etc.)
+```
+
+## LICENSE (MIT License Example)
+
+```
+$license_content (A complete MIT License file content.  You can adapt this to another license if specified in the challenge.)
+```
+
+## CONTRIBUTING.md Content
+
+```markdown
+$contributing_content (A complete CONTRIBUTING.md file content, outlining the process for contributing to the project, including code style guidelines, pull request process, and reporting issues.)
+```
+
+---
+
+Here is the challenge you are tasked with: Create a GitHub-ready documentation structure and files for a TypeScript library called 'data-validator' that provides functions for validating different data types. Assume the library is open-source and you want to encourage community contributions."
