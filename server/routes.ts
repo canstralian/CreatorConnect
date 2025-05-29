@@ -1,7 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import session from "express-session";
 import { z } from "zod";
 import {
   insertUserSchema,
@@ -13,31 +12,17 @@ import {
   insertStorySchema,
   loginSchema,
 } from "@shared/schema";
-import MemoryStore from "memorystore";
-
-const SessionStore = MemoryStore(session);
+import {
+  hashPassword,
+  verifyPassword,
+  generateToken,
+  authenticateToken,
+  rateLimitLogin,
+  recordLoginAttempt,
+  type AuthenticatedRequest,
+} from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up session middleware
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "adultconnect-secret",
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: false, maxAge: 86400000 }, // 24h
-      store: new SessionStore({
-        checkPeriod: 86400000, // 24h
-      }),
-    })
-  );
-
-  // Auth middleware
-  const authenticated = (req: Request, res: Response, next: Function) => {
-    if (req.session && req.session.userId) {
-      return next();
-    }
-    res.status(401).json({ message: "Unauthorized" });
-  };
 
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
@@ -50,14 +35,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username already taken" });
       }
       
-      const user = await storage.createUser(userData);
+      // Hash password before storing
+      const hashedPassword = await hashPassword(userData.password);
+      const userWithHashedPassword = { ...userData, password: hashedPassword };
       
-      // Set session
-      req.session.userId = user.id;
+      const user = await storage.createUser(userWithHashedPassword);
       
-      // Return user without password
+      // Generate JWT token
+      const token = generateToken(user.id);
+      
+      // Return user without password and token
       const { password, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
+      res.status(201).json({ 
+        user: userWithoutPassword,
+        token 
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors });
@@ -66,22 +58,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", rateLimitLogin, async (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    
     try {
       const credentials = loginSchema.parse(req.body);
       
       const user = await storage.getUserByUsername(credentials.username);
-      if (!user || user.password !== credentials.password) {
+      if (!user) {
+        recordLoginAttempt(ip, false);
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Set session
-      req.session.userId = user.id;
+      // Verify password with bcrypt
+      const isPasswordValid = await verifyPassword(credentials.password, user.password);
+      if (!isPasswordValid) {
+        recordLoginAttempt(ip, false);
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
       
-      // Return user without password
+      // Record successful login
+      recordLoginAttempt(ip, true);
+      
+      // Generate JWT token
+      const token = generateToken(user.id);
+      
+      // Return user without password and token
       const { password, ...userWithoutPassword } = user;
-      res.status(200).json(userWithoutPassword);
+      res.status(200).json({ 
+        user: userWithoutPassword,
+        token 
+      });
     } catch (error) {
+      recordLoginAttempt(ip, false);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors });
       }
@@ -90,17 +99,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Failed to logout" });
-      }
-      res.status(200).json({ message: "Logged out successfully" });
-    });
+    // With JWT, logout is handled client-side by removing the token
+    // We could implement token blacklisting here for additional security
+    res.status(200).json({ message: "Logged out successfully" });
   });
 
-  app.get("/api/auth/me", authenticated, async (req, res) => {
+  app.get("/api/auth/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const user = await storage.getUser(req.session.userId as number);
+      const user = await storage.getUser(req.userId as number);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -144,9 +150,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Post routes
-  app.post("/api/posts", authenticated, async (req, res) => {
+  app.post("/api/posts", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       const postData = insertPostSchema.parse({ ...req.body, userId });
       
       const post = await storage.createPost(postData);
@@ -159,9 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/posts", authenticated, async (req, res) => {
+  app.get("/api/posts", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       const posts = await storage.getFeedPosts(userId);
       
       // Get user info for each post
@@ -217,7 +223,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const posts = await storage.getPostsByUser(userId);
       
       // Determine if authenticated and if so, check if posts are liked
-      const currentUserId = req.session.userId as number | undefined;
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+      let currentUserId: number | undefined;
+      
+      if (token) {
+        const decoded = verifyToken(token);
+        currentUserId = decoded?.userId;
+      }
       
       // Get user info
       const user = await storage.getUser(userId);
@@ -256,10 +269,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Comment routes
-  app.post("/api/posts/:id/comments", authenticated, async (req, res) => {
+  app.post("/api/posts/:id/comments", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const postId = parseInt(req.params.id);
-      const userId = req.session.userId as number;
+      const userId = req.userId as number;
       
       const post = await storage.getPost(postId);
       if (!post) {
